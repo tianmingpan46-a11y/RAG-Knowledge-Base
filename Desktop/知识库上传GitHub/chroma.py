@@ -102,12 +102,18 @@ def load_document(file_path, file_type):
             
             # 备用方案：使用pandas读取Excel文件
             try:
+                import streamlit as st
+                st.write(f"尝试使用pandas加载Excel文件: {file_path}")
+                
                 # 读取Excel文件的所有工作表
                 excel_file = pd.ExcelFile(file_path)
                 documents = []
                 
+                st.write(f"发现 {len(excel_file.sheet_names)} 个工作表: {excel_file.sheet_names}")
+                
                 for sheet_name in excel_file.sheet_names:
                     df = pd.read_excel(file_path, sheet_name=sheet_name)
+                    st.write(f"工作表 '{sheet_name}' 有 {len(df)} 行数据")
                     
                     # 将DataFrame转换为文本
                     text_content = f"工作表: {sheet_name}\n\n"
@@ -123,20 +129,22 @@ def load_document(file_path, file_type):
                                 text_content += f"行{index + 1}: {row_text}\n"
                     
                     # 创建文档对象
-                    from langchain.schema import Document
+                    from langchain_core.documents import Document
                     doc = Document(
                         page_content=text_content,
                         metadata={"source": file_path, "sheet_name": sheet_name}
                     )
                     documents.append(doc)
                 
+                st.write(f"成功加载Excel文件，共生成 {len(documents)} 个文档")
                 return documents
                 
             except Exception as e:
                 import streamlit as st
-                st.write(f"pandas加载Excel文件失败: {e}")
+                st.error(f"pandas加载Excel文件失败: {e}")
                 st.write(f"文件路径: {file_path}")
                 st.write(f"文件类型: {file_type}")
+                st.write(f"错误类型: {type(e).__name__}")
                 return None
         else:
             return None
