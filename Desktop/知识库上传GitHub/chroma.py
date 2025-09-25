@@ -50,7 +50,7 @@ def init_chroma_db():
 def init_embedding_model():
     """初始化嵌入模型"""
     load_dotenv("./.env")  # 加载环境变量
-    model = SentenceTransformer(os.getenv("modelname"), device='cpu')  # 初始化嵌入模型
+    model = SentenceTransformer(os.getenv("modelname"))  # 初始化嵌入模型
     return model  # 返回已初始化的嵌入模型，供后续生成向量使用
 
 ## 文件处理功能
