@@ -1,4 +1,19 @@
+# 忽略系统文件
+../*
+../../*
+!../知识库上传GitHub/
+!../知识库上传GitHub/*
+
+# 忽略项目文件
 chroma_db/
 __pycache__/
 *.sqlite3
 *.bin
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
