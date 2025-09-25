@@ -1,0 +1,11 @@
+streamlit
+pandas
+chromadb
+sentence-transformers
+langchain
+langchain-community
+python-dotenv
+pypdf
+docx2txt
+# unstructured
+# unstructured[all-docs]
