@@ -49,9 +49,29 @@ def init_chroma_db():
 
 def init_embedding_model():
     """初始化嵌入模型"""
-    load_dotenv("./.env")  # 加载环境变量
-    model = SentenceTransformer(os.getenv("modelname"))  # 初始化嵌入模型
-    return model  # 返回已初始化的嵌入模型，供后续生成向量使用
+    # 尝试加载环境变量文件，如果不存在则忽略
+    try:
+        load_dotenv("./.env")
+    except:
+        pass  # 如果.env文件不存在，继续使用默认值
+    
+    # 获取模型名称，如果没有设置则使用默认模型
+    model_name = os.getenv("modelname", "all-MiniLM-L6-v2")
+    
+    try:
+        # 初始化嵌入模型，明确指定使用CPU设备
+        model = SentenceTransformer(model_name, device='cpu')
+        return model  # 返回已初始化的嵌入模型，供后续生成向量使用
+    except Exception as e:
+        print(f"模型初始化失败: {e}")
+        # 如果指定模型失败，尝试使用默认模型
+        try:
+            model = SentenceTransformer("all-MiniLM-L6-v2", device='cpu')
+            print("使用默认模型 all-MiniLM-L6-v2")
+            return model
+        except Exception as e2:
+            print(f"默认模型也初始化失败: {e2}")
+            raise e2
 
 ## 文件处理功能
 

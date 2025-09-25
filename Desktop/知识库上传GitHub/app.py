@@ -6,8 +6,12 @@ import uuid
 import chroma
 
 # 初始化Chroma数据库和嵌入模型
-collection = chroma.init_chroma_db()
-model = chroma.init_embedding_model()
+try:
+    collection = chroma.init_chroma_db()
+    model = chroma.init_embedding_model()
+except Exception as e:
+    st.error(f"❌ 系统初始化失败: {str(e)}")
+    st.stop()
 
 # 页面配置
 st.set_page_config(
