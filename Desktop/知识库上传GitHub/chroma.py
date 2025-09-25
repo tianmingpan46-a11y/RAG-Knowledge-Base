@@ -7,7 +7,7 @@ from sentence_transformers import SentenceTransformer
 # 从LangChain库中导入RecursiveCharacterTextSplitter(用于将文本分割为小块)
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # 从LangChain库中导入TextLoader, PyPDFLoader, Docx2txtLoader(用于加载文本文件)
-from langchain.document_loaders import TextLoader, PyPDFLoader, Docx2txtLoader
+from langchain_community.document_loaders import TextLoader, PyPDFLoader, Docx2txtLoader
 # 尝试引入 Excel 加载器（保持简单，仅支持该加载器）
 try:
     from langchain_community.document_loaders import UnstructuredExcelLoader
@@ -65,14 +65,15 @@ def init_embedding_model():
         model = SentenceTransformer(model_name, device='cpu')
         return model  # 返回已初始化的嵌入模型，供后续生成向量使用
     except Exception as e:
-        print(f"模型初始化失败: {e}")
+        import streamlit as st
+        st.write(f"模型初始化失败: {e}")
         # 如果指定模型失败，尝试使用默认模型
         try:
             model = SentenceTransformer("all-MiniLM-L6-v2", device='cpu')
-            print("使用默认模型 all-MiniLM-L6-v2")
+            st.write("使用默认模型 all-MiniLM-L6-v2")
             return model
         except Exception as e2:
-            print(f"默认模型也初始化失败: {e2}")
+            st.write(f"默认模型也初始化失败: {e2}")
             raise e2
 
 ## 文件处理功能
@@ -96,7 +97,8 @@ def load_document(file_path, file_type):
                     documents = loader.load()
                     return documents
                 except Exception as e:
-                    print(f"UnstructuredExcelLoader加载失败: {e}，尝试使用pandas")
+                    import streamlit as st
+                    st.write(f"UnstructuredExcelLoader加载失败: {e}，尝试使用pandas")
             
             # 备用方案：使用pandas读取Excel文件
             try:
@@ -131,15 +133,22 @@ def load_document(file_path, file_type):
                 return documents
                 
             except Exception as e:
-                print(f"pandas加载Excel文件失败: {e}")
+                import streamlit as st
+                st.write(f"pandas加载Excel文件失败: {e}")
+                st.write(f"文件路径: {file_path}")
+                st.write(f"文件类型: {file_type}")
                 return None
         else:
             return None
         
+        # 对于非Excel文件，加载文档
         documents = loader.load()
         return documents
     except Exception as e:
-        print(f"加载文件失败: {e}")
+        import streamlit as st
+        st.write(f"加载文件失败: {e}")
+        st.write(f"文件路径: {file_path}")
+        st.write(f"文件类型: {file_type}")
         return None
 
 ### 2. 文本分割器
@@ -171,7 +180,8 @@ def generate_embeddings(texts, model):
         embeddings = model.encode(texts).tolist()
         return embeddings
     except Exception as e:
-        print(f"生成嵌入向量失败: {e}")
+        import streamlit as st
+        st.write(f"生成嵌入向量失败: {e}")
         return None
 
 def store_documents_to_collection(texts, embeddings, metadatas, ids, collection):
@@ -256,7 +266,8 @@ def get_documents_by_filename(file_name, collection):
         return file_records
         
     except Exception as e:
-        print(f"获取文件记录失败: {e}")
+        import streamlit as st
+        st.write(f"获取文件记录失败: {e}")
         return []
 
 def get_file_statistics(collection):
@@ -290,7 +301,8 @@ def get_file_statistics(collection):
         return file_stats
         
     except Exception as e:
-        print(f"获取文件统计失败: {e}")
+        import streamlit as st
+        st.write(f"获取文件统计失败: {e}")
         return {}
 
 def search_documents(query, collection, model, n_results=5, file_filter=None):
@@ -346,5 +358,6 @@ def search_documents(query, collection, model, n_results=5, file_filter=None):
         return search_results
         
     except Exception as e:
-        print(f"搜索失败: {e}")
+        import streamlit as st
+        st.write(f"搜索失败: {e}")
         return []

@@ -67,7 +67,7 @@ if selected_function == "上传知识库":
         # 用dataframe函数显示数据框
         df = pd.DataFrame(file_info)
         # use_container_width=True是使用容器宽度
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width='stretch')
         
         # 上传按钮
         if st.button("🚀 开始上传", type="primary"):
