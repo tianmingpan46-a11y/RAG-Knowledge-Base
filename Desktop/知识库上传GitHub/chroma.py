@@ -13,6 +13,8 @@ try:
     from langchain_community.document_loaders import UnstructuredExcelLoader
 except Exception:
     UnstructuredExcelLoader = None
+# 导入pandas用于Excel文件处理
+import pandas as pd
 # 导入os库(用于操作文件和目录)
 import os
 # 导入uuid库(用于生成唯一标识符)
@@ -87,10 +89,50 @@ def load_document(file_path, file_type):
         elif file_type == 'docx':
             loader = Docx2txtLoader(file_path)
         elif file_type in ['xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']:
-            if UnstructuredExcelLoader is None:
-                print("加载文件失败: 未找到 UnstructuredExcelLoader，请安装 langchain_community[unstructured] 及其依赖")
+            # 首先尝试使用UnstructuredExcelLoader
+            if UnstructuredExcelLoader is not None:
+                try:
+                    loader = UnstructuredExcelLoader(file_path)
+                    documents = loader.load()
+                    return documents
+                except Exception as e:
+                    print(f"UnstructuredExcelLoader加载失败: {e}，尝试使用pandas")
+            
+            # 备用方案：使用pandas读取Excel文件
+            try:
+                # 读取Excel文件的所有工作表
+                excel_file = pd.ExcelFile(file_path)
+                documents = []
+                
+                for sheet_name in excel_file.sheet_names:
+                    df = pd.read_excel(file_path, sheet_name=sheet_name)
+                    
+                    # 将DataFrame转换为文本
+                    text_content = f"工作表: {sheet_name}\n\n"
+                    
+                    # 添加列名
+                    if not df.empty:
+                        text_content += "列名: " + ", ".join(df.columns.astype(str)) + "\n\n"
+                        
+                        # 添加数据行
+                        for index, row in df.iterrows():
+                            row_text = " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)])
+                            if row_text.strip():
+                                text_content += f"行{index + 1}: {row_text}\n"
+                    
+                    # 创建文档对象
+                    from langchain.schema import Document
+                    doc = Document(
+                        page_content=text_content,
+                        metadata={"source": file_path, "sheet_name": sheet_name}
+                    )
+                    documents.append(doc)
+                
+                return documents
+                
+            except Exception as e:
+                print(f"pandas加载Excel文件失败: {e}")
                 return None
-            loader = UnstructuredExcelLoader(file_path)
         else:
             return None
         
