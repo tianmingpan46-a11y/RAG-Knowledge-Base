@@ -105,36 +105,56 @@ def load_document(file_path, file_type):
                 import streamlit as st
                 st.write(f"尝试使用pandas加载Excel文件: {file_path}")
                 
-                # 读取Excel文件的所有工作表
-                excel_file = pd.ExcelFile(file_path)
-                documents = []
+                # 尝试不同的引擎
+                engines = ['openpyxl', 'xlrd']
+                excel_file = None
                 
+                for engine in engines:
+                    try:
+                        st.write(f"尝试使用引擎: {engine}")
+                        excel_file = pd.ExcelFile(file_path, engine=engine)
+                        st.write(f"成功使用 {engine} 引擎")
+                        break
+                    except Exception as engine_error:
+                        st.write(f"引擎 {engine} 失败: {engine_error}")
+                        continue
+                
+                if excel_file is None:
+                    st.error("所有Excel引擎都失败了")
+                    return None
+                
+                documents = []
                 st.write(f"发现 {len(excel_file.sheet_names)} 个工作表: {excel_file.sheet_names}")
                 
                 for sheet_name in excel_file.sheet_names:
-                    df = pd.read_excel(file_path, sheet_name=sheet_name)
-                    st.write(f"工作表 '{sheet_name}' 有 {len(df)} 行数据")
-                    
-                    # 将DataFrame转换为文本
-                    text_content = f"工作表: {sheet_name}\n\n"
-                    
-                    # 添加列名
-                    if not df.empty:
-                        text_content += "列名: " + ", ".join(df.columns.astype(str)) + "\n\n"
+                    try:
+                        df = pd.read_excel(file_path, sheet_name=sheet_name, engine=excel_file.engine)
+                        st.write(f"工作表 '{sheet_name}' 有 {len(df)} 行数据")
                         
-                        # 添加数据行
-                        for index, row in df.iterrows():
-                            row_text = " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)])
-                            if row_text.strip():
-                                text_content += f"行{index + 1}: {row_text}\n"
-                    
-                    # 创建文档对象
-                    from langchain_core.documents import Document
-                    doc = Document(
-                        page_content=text_content,
-                        metadata={"source": file_path, "sheet_name": sheet_name}
-                    )
-                    documents.append(doc)
+                        # 将DataFrame转换为文本
+                        text_content = f"工作表: {sheet_name}\n\n"
+                        
+                        # 添加列名
+                        if not df.empty:
+                            text_content += "列名: " + ", ".join(df.columns.astype(str)) + "\n\n"
+                            
+                            # 添加数据行
+                            for index, row in df.iterrows():
+                                row_text = " | ".join([f"{col}: {val}" for col, val in row.items() if pd.notna(val)])
+                                if row_text.strip():
+                                    text_content += f"行{index + 1}: {row_text}\n"
+                        
+                        # 创建文档对象
+                        from langchain_core.documents import Document
+                        doc = Document(
+                            page_content=text_content,
+                            metadata={"source": file_path, "sheet_name": sheet_name}
+                        )
+                        documents.append(doc)
+                        
+                    except Exception as sheet_error:
+                        st.warning(f"工作表 '{sheet_name}' 加载失败: {sheet_error}")
+                        continue
                 
                 st.write(f"成功加载Excel文件，共生成 {len(documents)} 个文档")
                 return documents
